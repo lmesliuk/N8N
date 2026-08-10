@@ -1,0 +1,195 @@
+{
+  "name": "Entregable01",
+  "nodes": [
+    {
+      "parameters": {
+        "options": {}
+      },
+      "id": "6cc81cbd-2d4d-4584-a4d2-19d22f83f5bc",
+      "name": "When chat message received",
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.4,
+      "position": [
+        0,
+        0
+      ],
+      "webhookId": "b5ddb52d-d9e8-4cb5-b4c5-08b1c144ca9f"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "# ROL Y ÁMBITO\nSos un Asistente QA.\nTu único ámbito es la consulta y análisis del estado de los proyectos de QA registrados en la planilla \"Status proyectos QA Pulse\"\nNO tenés autorización para modificar los proyectos.\n\n# OBJETIVO\nAnalizar el status de los proyectos de QA de la compañía.\n\n# REGLAS DE USO DE HERRAMIENTAS\n1. Antes de responder, verificá cada proyecto y respondé sólo cuando tenga informada la fecha de deadline. \n2. Después de completar cada tarea, enviá un resumen con \"log_observabilidad\" con el formato: \"Status del proyecto: [detalle]\".\n\n# ESCALAMIENTO\nSi el proyecto no existe o la consulta excede el ámbito QA, mostrar el mensaje: \"Transfiriendo tu caso a revisión humana\".",
+          "maxIterations": 5
+        }
+      },
+      "id": "b86e6ebc-4f53-4041-b2ce-187c90949178",
+      "name": "AI Agent",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        384,
+        0
+      ],
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "model": "qwen/qwen3.6-27b",
+        "options": {}
+      },
+      "id": "bf072381-3008-4146-9097-cb13fcd428a1",
+      "name": "Groq Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        176,
+        240
+      ],
+      "credentials": {
+        "groqApi": {
+          "id": "gBZOL4cynXkzvt4B",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "c1eaeb72-c1ec-4c8a-8435-04c3f374d47f",
+      "name": "Simple Memory",
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        352,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Envía por Gmail el reporte de auditoría al supervisor humano. Usá esta herramienta una única vez al final de cada tarea completada, con un cuerpo que resuma: qué pidió el usuario, qué herramientas usaste y cuál fue el resultado final.",
+        "sendTo": "spiderlammy@gmail.com",
+        "subject": "QA Pulse - Consulta de proyecto finalizada",
+        "emailType": "text",
+        "message": "={{ $fromAI('resumen', 'Resumen de la tarea completada: qué pidió el usuario, qué herramientas se usaron y el resultado final', 'string') }}",
+        "options": {}
+      },
+      "id": "0abd48e4-4390-45fc-8ff3-119fefef533a",
+      "name": "log_observabilidad",
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        656,
+        240
+      ],
+      "webhookId": "0d3e7a1f-1ff9-45fd-9bcd-88722ad6788c",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "4GPClv4RNiliVVl1",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "“Utilizá esta herramienta cuando el usuario solicite información sobre el estado, avance, deadline o situación actual de un proyecto de QA. Consultá la planilla ‘Status proyectos QA Pulse’ para obtener los datos reales antes de responder. No inventes información sobre proyectos que no aparezcan en la planilla. Si el proyecto solicitado no existe, informá al agente para que aplique el mecanismo de escalamiento.”",
+        "documentId": {
+          "__rl": true,
+          "value": "https://docs.google.com/spreadsheets/d/1qI26g8-uV9PMTrWNglxR1sRuNG1IedQ0ch6hv1tO-es/edit?gid=0#gid=0",
+          "mode": "url"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "0",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "id": "c6d28a0b-c959-4ca0-b3d3-b91227b2c432",
+      "name": "consultar_status",
+      "type": "n8n-nodes-base.googleSheetsTool",
+      "typeVersion": 4.7,
+      "position": [
+        528,
+        240
+      ],
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "MUvmQnrqbXrmw8w5",
+          "name": "Google Sheets account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "log_observabilidad": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "consultar_status": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "db3b3e75-e1da-48d0-b67f-24f837b2ea75",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "77a186c4857ca355ac6b407af85218612aee6195ee000d81dc826d5f092a64ab"
+  },
+  "nodeGroups": [],
+  "id": "Me6Crc06GjVNWSN7",
+  "tags": []
+}
